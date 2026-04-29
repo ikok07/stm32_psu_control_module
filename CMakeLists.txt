@@ -36,6 +36,7 @@ add_executable(${CMAKE_PROJECT_NAME})
 
 file(GLOB APP_SOURCES
         "Src/*.c"
+        "Src/msp/*.c"
         "./startup_stm32f401xc.s"
 )
 
@@ -48,15 +49,24 @@ file(GLOB HAL_SOURCES
 )
 
 file(GLOB FREERTOS_SOURCES
-        "lib/FreeRTOS/*.c"
+        "lib/FreeRTOS/Src/*.c"
 )
 
 file(GLOB FREERTOS_PORT_SOURCES
-        "lib/FreeRTOS_Port/*.c"
+        "lib/FreeRTOS_Port/Src/*.c"
 )
 
 file(GLOB INA3221_SOURCES
         "lib/INA3221/Src/*.c"
+)
+
+
+file(GLOB SHVAL_SOURCES
+        "lib/shared_values/Src/*.c"
+)
+
+file(GLOB LOGGER_SOURCES
+        "lib/logger/Src/*.c"
 )
 
 # Add sources to executable
@@ -67,6 +77,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${FREERTOS_SOURCES}
         ${FREERTOS_PORT_SOURCES}
         ${INA3221_SOURCES}
+        ${SHVAL_SOURCES}
+        ${LOGGER_SOURCES}
 )
 
 # Add include paths
@@ -78,6 +90,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         lib/FreeRTOS_Port/Include
         lib/FreeRTOS/Include
         lib/INA3221/Include
+        lib/shared_values/Include
+        lib/logger/Include
 )
 
 # Add project symbols (macros)

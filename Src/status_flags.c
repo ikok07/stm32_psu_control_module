@@ -1,0 +1,123 @@
+//
+// Created by Kok on 4/29/26.
+//
+
+#include "status_flags.h"
+
+#include "app_state.h"
+#include "gpio_defs.h"
+#include "log.h"
+#include "tasks_common.h"
+
+#include "stm32f4xx_hal.h"
+
+void status_flags_task(void *arg);
+
+QueueHandle_t gStatusFlagsQueue;
+
+void STFLAGS_Init() {
+    gStatusFlagsQueue = xQueueCreate(5, sizeof(uint16_t));
+
+    SHVAL_ConfigTypeDef shval_config = {
+        .InitialValue = 0,
+        .SubscribersEventBits = STATUS_FLAGS_EVT_BIT
+    };
+    gAppState.SharedValues->StatusFlags = SHVAL_Init(&shval_config);
+
+    xTaskCreate(
+        status_flags_task,
+        "Status Flags Task",
+        STATUS_FLAGS_TASK_STACK_DEPTH,
+        NULL,
+        STATUS_FLAGS_TASK_PRIORITY,
+        &gAppState.Tasks->StatusFlagsTask
+    );
+
+    GPIO_InitTypeDef GPIO_Config = {
+        .Speed = GPIO_SPEED_FREQ_LOW,
+        .Mode = GPIO_MODE_IT_RISING_FALLING
+    };
+
+    GPIO_Config.Pin = PWR_VALID_FLAG_GPIO_PIN;
+    GPIO_Config.Pull = GPIO_PULLDOWN;
+    HAL_GPIO_Init(PWR_VALID_FLAG_GPIO_PORT, &GPIO_Config);
+    HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+    GPIO_Config.Pin = PWR_CRITICAL_FLAG_GPIO_PIN;
+    GPIO_Config.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(PWR_CRITICAL_FLAG_GPIO_PORT, &GPIO_Config);
+    HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
+    GPIO_Config.Pin = PWR_WARNING_FLAG_GPIO_PIN;
+    GPIO_Config.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(PWR_WARNING_FLAG_GPIO_PORT, &GPIO_Config);
+    HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
+    GPIO_Config.Pin = PWR_TIMING_FLAG_GPIO_PIN;
+    GPIO_Config.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(PWR_TIMING_FLAG_GPIO_PORT, &GPIO_Config);
+    HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+
+    GPIO_Config.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_Config.Pin = PWR_3V3_FLAG_GPIO_PIN;
+    GPIO_Config.Pull = GPIO_PULLDOWN;
+    HAL_GPIO_Init(PWR_3V3_EN_FLAG_GPIO_PORT, &GPIO_Config);
+
+    GPIO_Config.Pin = PWR_5V_FLAG_GPIO_PIN;
+    HAL_GPIO_Init(PWR_5V_EN_FLAG_GPIO_PORT, &GPIO_Config);
+
+    GPIO_Config.Pin = PWR_12V_FLAG_GPIO_PIN;
+    HAL_GPIO_Init(PWR_12V_EN_FLAG_GPIO_PORT, &GPIO_Config);
+
+    GPIO_Config.Pin = ERR_ACTIVE_FLAG_GPIO_PIN;
+    HAL_GPIO_Init(ERR_ACTIVE_FLAG_GPIO_PORT, &GPIO_Config);
+}
+
+void status_flags_task(void *arg) {
+    LOGGER_Log(LOGGER_LEVEL_INFO, "Status flags tasks started!");
+
+    SHVAL_ErrorTypeDef shval_err = SHVAL_ERROR_OK;
+    uint32_t curr_flags = 0;
+    uint16_t gpio_pin;
+
+    while (1) {
+        if (xQueueReceive(gStatusFlagsQueue, &gpio_pin, portMAX_DELAY)) {
+            if ((shval_err = SHVAL_GetValue(&gAppState.SharedValues->StatusFlags, &curr_flags, 1000)) != SHVAL_ERROR_OK) {
+                LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to get shared status flags! Error code: %d", shval_err);
+                continue;
+            }
+
+            // GPIOA is common for all GPIOs
+            uint8_t curr_gpio_state = HAL_GPIO_ReadPin(GPIOA, gpio_pin);
+
+            switch (gpio_pin) {
+                case PWR_VALID_FLAG_GPIO_PIN:
+                    if (curr_gpio_state) curr_flags |= (1 << STATUS_FLAG_PWR_VALID);
+                    else curr_flags &=~ (1 << STATUS_FLAG_PWR_VALID);
+                case PWR_CRITICAL_FLAG_GPIO_PIN:
+                    if (!curr_gpio_state) curr_flags |= (1 << STATUS_FLAG_PWR_CRITICAL);
+                    else curr_flags &=~ (1 << STATUS_FLAG_PWR_CRITICAL);
+                case PWR_WARNING_FLAG_GPIO_PIN:
+                    if (!curr_gpio_state) curr_flags |= (1 << STATUS_FLAG_PWR_WARNING);
+                    else curr_flags &=~ (1 << STATUS_FLAG_PWR_WARNING);
+                case PWR_TIMING_FLAG_GPIO_PIN:
+                    if (!curr_gpio_state) curr_flags |= (1 << STATUS_FLAG_PWR_TIMING);
+                    else curr_flags &=~ (1 << STATUS_FLAG_PWR_TIMING);
+            }
+
+            if ((shval_err = SHVAL_SetValue(&gAppState.SharedValues->StatusFlags, curr_flags, 1000)) != SHVAL_ERROR_OK) {
+                LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to set shared status flags! Error code: %d", shval_err);
+            };
+        }
+    }
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    // xQueueSendFromISR(gStatusFlagsQueue, &GPIO_Pin, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+}

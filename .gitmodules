@@ -1,3 +1,12 @@
 [submodule "lib/CubeF4"]
 	path = lib/CubeF4
 	url = https://github.com/STMicroelectronics/STM32CubeF4
+[submodule "lib/INA3221"]
+	path = lib/INA3221
+	url = https://github.com/ikok07/ina3221-generic-driver.git
+[submodule "lib/shared_values"]
+	path = lib/shared_values
+	url = https://github.com/ikok07/stm32_shared_values.git
+[submodule "lib/logger"]
+	path = lib/logger
+	url = https://github.com/ikok07/stm32_logger.git
