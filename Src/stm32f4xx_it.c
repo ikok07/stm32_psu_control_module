@@ -9,7 +9,6 @@
 #include "task.h"
 
 void TIM1_BRK_TIM9_IRQHandler() {
-    __HAL_TIM_CLEAR_IT(&gAppState.htim9, TIM_IT_UPDATE);
     HAL_IncTick();
     HAL_TIM_IRQHandler(&gAppState.htim9);
 }
@@ -28,4 +27,14 @@ void EXTI2_IRQHandler() {
 
 void EXTI3_IRQHandler() {
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
+}
+
+void EXTI4_IRQHandler() {
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
+}
+
+void EXTI9_5_IRQHandler() {
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
 }

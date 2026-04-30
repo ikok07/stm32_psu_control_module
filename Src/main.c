@@ -1,6 +1,7 @@
 #include "stm32f4xx_hal.h"
 
 #include "app_state.h"
+#include "display.h"
 #include "log.h"
 #include "logging.h"
 #include "status_flags.h"
@@ -24,6 +25,10 @@ int main(void) {
     // Initialize status flags
     STFLAGS_Init();
     LOGGER_Log(LOGGER_LEVEL_INFO, "Status flags initialized!");
+
+    // Initialize display
+    DISPLAY_Init();
+    LOGGER_Log(LOGGER_LEVEL_INFO, "Display initialized!");
 
     // Start FreeRTOS Scheduler
     vTaskStartScheduler();

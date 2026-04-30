@@ -62,5 +62,6 @@
     <mapping directory="$PROJECT_DIR$/lib/INA3221" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/logger" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/shared_values" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/ssd1306" vcs="Git" />
   </component>
 </project>

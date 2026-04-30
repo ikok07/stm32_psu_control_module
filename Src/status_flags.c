@@ -21,7 +21,7 @@ void STFLAGS_Init() {
 
     SHVAL_ConfigTypeDef shval_config = {
         .InitialValue = 0,
-        .SubscribersEventBits = STATUS_FLAGS_EVT_BIT
+        .SubscribersEventBits = STATUS_FLAGS_DISPLAY_EVT_BIT
     };
     gAppState.SharedValues->StatusFlags = SHVAL_Init(&shval_config);
 
@@ -64,15 +64,25 @@ void STFLAGS_Init() {
     HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 
     GPIO_Config.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_Config.Pin = PWR_3V3_FLAG_GPIO_PIN;
+    GPIO_Config.Pin = PWR_3V3_EN_FLAG_GPIO_PIN;
     GPIO_Config.Pull = GPIO_PULLDOWN;
     HAL_GPIO_Init(PWR_3V3_EN_FLAG_GPIO_PORT, &GPIO_Config);
+    HAL_NVIC_SetPriority(EXTI4_IRQn, PWR_3V3_FLAG_GPIO_NVIC_PRIO, 0);
+    HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
-    GPIO_Config.Pin = PWR_5V_FLAG_GPIO_PIN;
+    GPIO_Config.Pin = PWR_5V_EN_FLAG_GPIO_PIN;
     HAL_GPIO_Init(PWR_5V_EN_FLAG_GPIO_PORT, &GPIO_Config);
 
-    GPIO_Config.Pin = PWR_12V_FLAG_GPIO_PIN;
+    GPIO_Config.Pin = PWR_12V_EN_FLAG_GPIO_PIN;
     HAL_GPIO_Init(PWR_12V_EN_FLAG_GPIO_PORT, &GPIO_Config);
+    HAL_NVIC_SetPriority(EXTI9_5_IRQn, PWR_5V_12V_FLAG_GPIO_NVIC_PRIO, 0);
+    HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+    GPIO_Config.Pin = PWR_SCREEN_SEL_GPIO_PIN;
+    GPIO_Config.Mode = GPIO_MODE_IT_RISING;
+    HAL_GPIO_Init(PWR_SCREEN_SEL_GPIO_PORT, &GPIO_Config);
+    HAL_NVIC_SetPriority(EXTI9_5_IRQn, PWR_5V_12V_FLAG_GPIO_NVIC_PRIO, 0);
+    HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
     GPIO_Config.Pin = ERR_ACTIVE_FLAG_GPIO_PIN;
     HAL_GPIO_Init(ERR_ACTIVE_FLAG_GPIO_PORT, &GPIO_Config);
@@ -111,6 +121,28 @@ void status_flags_task(void *arg) {
                 case PWR_TIMING_FLAG_GPIO_PIN:
                     if (!curr_gpio_state) curr_flags |= (1 << STATUS_FLAG_PWR_TIMING);
                     else curr_flags &=~ (1 << STATUS_FLAG_PWR_TIMING);
+                    break;
+                case PWR_3V3_EN_FLAG_GPIO_PIN:
+                    if (curr_gpio_state) curr_flags |= (1 << STATUS_FLAG_3V3_EN);
+                    else curr_flags &=~ (1 << STATUS_FLAG_3V3_EN);
+                    break;
+                case PWR_5V_EN_FLAG_GPIO_PIN:
+                    if (curr_gpio_state) curr_flags |= (1 << STATUS_FLAG_5V_EN);
+                    else curr_flags &=~ (1 << STATUS_FLAG_5V_EN);
+                    break;
+                case PWR_12V_EN_FLAG_GPIO_PIN:
+                    if (curr_gpio_state) curr_flags |= (1 << STATUS_FLAG_12V_EN);
+                    else curr_flags &=~ (1 << STATUS_FLAG_12V_EN);
+                    break;
+                case PWR_SCREEN_SEL_GPIO_PIN:
+                    uint8_t curr_mode = (curr_flags >> STATUS_FLAG_PWR_DISPLAY_PAGE) && 0x03;
+                    uint8_t next_mode = curr_mode >= PWR_DISPLAY_PAGE_12V ? PWR_DISPLAY_PAGE_3V3 : curr_mode + 1;
+
+                    // Clear bits
+                    curr_flags &=~ (0x03 << STATUS_FLAG_PWR_DISPLAY_PAGE);
+
+                    // Set new bits
+                    curr_flags |= (next_mode << STATUS_FLAG_PWR_DISPLAY_PAGE);
                     break;
             }
 

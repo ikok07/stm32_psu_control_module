@@ -40,45 +40,21 @@ file(GLOB APP_SOURCES
         "./startup_stm32f401xc.s"
 )
 
-file(GLOB CMSIS_SOURCES
+file(GLOB LIB_SOURCES
         "lib/CMSIS/Device/ST/STM32F4xx/Source/*.c"
-)
-
-file(GLOB HAL_SOURCES
         "lib/HAL/Src/*.c"
-)
-
-file(GLOB FREERTOS_SOURCES
         "lib/FreeRTOS/Src/*.c"
-)
-
-file(GLOB FREERTOS_PORT_SOURCES
         "lib/FreeRTOS_Port/Src/*.c"
-)
-
-file(GLOB INA3221_SOURCES
         "lib/INA3221/Src/*.c"
-)
-
-
-file(GLOB SHVAL_SOURCES
         "lib/shared_values/Src/*.c"
-)
-
-file(GLOB LOGGER_SOURCES
         "lib/logger/Src/*.c"
+        "lib/ssd1306/Src/*.c"
 )
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${APP_SOURCES}
-        ${CMSIS_SOURCES}
-        ${HAL_SOURCES}
-        ${FREERTOS_SOURCES}
-        ${FREERTOS_PORT_SOURCES}
-        ${INA3221_SOURCES}
-        ${SHVAL_SOURCES}
-        ${LOGGER_SOURCES}
+        ${LIB_SOURCES}
 )
 
 # Add include paths
@@ -92,6 +68,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         lib/INA3221/Include
         lib/shared_values/Include
         lib/logger/Include
+        lib/ssd1306/Include
 )
 
 # Add project symbols (macros)
@@ -101,3 +78,6 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Remove wrong libob.a library dependency when using cpp files
 list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
+
+# Enable float formatting in printf like methods
+target_link_options(stm32_f401_cbu6 PRIVATE -u _printf_float)

@@ -8,16 +8,21 @@
 
 #include "bit_defs.h"
 
-#define STATUS_FLAGS_EVT_BIT                            BIT0
+#define STATUS_FLAGS_DISPLAY_EVT_BIT                    BIT0
 
 #define STATUS_FLAG_PWR_VALID                           0
 #define STATUS_FLAG_PWR_CRITICAL                        1
 #define STATUS_FLAG_PWR_WARNING                         2
 #define STATUS_FLAG_PWR_TIMING                          3
-#define STATUS_FLAG_3V3_EN_                             4
+#define STATUS_FLAG_3V3_EN                              4
 #define STATUS_FLAG_5V_EN                               5
 #define STATUS_FLAG_12V_EN                              6
-#define STATUS_FLAG_ERR_ACTIVE                          7
+#define STATUS_FLAG_PWR_DISPLAY_PAGE                    7           // 2 bits for 3 pages
+#define STATUS_FLAG_ERR_ACTIVE                          9
+
+#define PWR_DISPLAY_PAGE_3V3                            0
+#define PWR_DISPLAY_PAGE_5V                             1
+#define PWR_DISPLAY_PAGE_12V                            2
 
 void STFLAGS_Init();
 

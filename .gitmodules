@@ -10,3 +10,6 @@
 [submodule "lib/logger"]
 	path = lib/logger
 	url = https://github.com/ikok07/stm32_logger.git
+[submodule "lib/ssd1306"]
+	path = lib/ssd1306
+	url = https://github.com/afiskon/stm32-ssd1306.git

@@ -11,6 +11,7 @@
 
 typedef struct {
     TaskHandle_t StatusFlagsTask;
+    TaskHandle_t DisplayTask;
 } APP_TasksTypeDef;
 
 typedef struct {
