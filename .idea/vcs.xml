@@ -60,5 +60,7 @@
     <mapping directory="$PROJECT_DIR$/lib/CubeF4/Middlewares/Third_Party/LwIP" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/CubeF4/Middlewares/Third_Party/mbedTLS" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/INA3221" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/logger" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/shared_values" vcs="Git" />
   </component>
 </project>

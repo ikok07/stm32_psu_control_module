@@ -7,6 +7,7 @@
 #include "app_state.h"
 #include "gpio_defs.h"
 #include "log.h"
+#include "nvic_prio_defs.h"
 #include "tasks_common.h"
 
 #include "stm32f4xx_hal.h"
@@ -41,25 +42,25 @@ void STFLAGS_Init() {
     GPIO_Config.Pin = PWR_VALID_FLAG_GPIO_PIN;
     GPIO_Config.Pull = GPIO_PULLDOWN;
     HAL_GPIO_Init(PWR_VALID_FLAG_GPIO_PORT, &GPIO_Config);
-    HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(EXTI0_IRQn, PWR_VALID_FLAG_GPIO_NVIC_PRIO, 0);
     HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
     GPIO_Config.Pin = PWR_CRITICAL_FLAG_GPIO_PIN;
     GPIO_Config.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(PWR_CRITICAL_FLAG_GPIO_PORT, &GPIO_Config);
-    HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(EXTI1_IRQn, PWR_CRITICAL_FLAG_GPIO_NVIC_PRIO, 0);
     HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
     GPIO_Config.Pin = PWR_WARNING_FLAG_GPIO_PIN;
     GPIO_Config.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(PWR_WARNING_FLAG_GPIO_PORT, &GPIO_Config);
-    HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(EXTI2_IRQn, PWR_WARNING_FLAG_GPIO_NVIC_PRIO, 0);
     HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
     GPIO_Config.Pin = PWR_TIMING_FLAG_GPIO_PIN;
     GPIO_Config.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(PWR_TIMING_FLAG_GPIO_PORT, &GPIO_Config);
-    HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(EXTI3_IRQn, PWR_TIMING_FLAG_GPIO_NVIC_PRIO, 0);
     HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 
     GPIO_Config.Mode = GPIO_MODE_OUTPUT_PP;
@@ -98,15 +99,19 @@ void status_flags_task(void *arg) {
                 case PWR_VALID_FLAG_GPIO_PIN:
                     if (curr_gpio_state) curr_flags |= (1 << STATUS_FLAG_PWR_VALID);
                     else curr_flags &=~ (1 << STATUS_FLAG_PWR_VALID);
+                    break;
                 case PWR_CRITICAL_FLAG_GPIO_PIN:
                     if (!curr_gpio_state) curr_flags |= (1 << STATUS_FLAG_PWR_CRITICAL);
                     else curr_flags &=~ (1 << STATUS_FLAG_PWR_CRITICAL);
+                    break;
                 case PWR_WARNING_FLAG_GPIO_PIN:
                     if (!curr_gpio_state) curr_flags |= (1 << STATUS_FLAG_PWR_WARNING);
                     else curr_flags &=~ (1 << STATUS_FLAG_PWR_WARNING);
+                    break;
                 case PWR_TIMING_FLAG_GPIO_PIN:
                     if (!curr_gpio_state) curr_flags |= (1 << STATUS_FLAG_PWR_TIMING);
                     else curr_flags &=~ (1 << STATUS_FLAG_PWR_TIMING);
+                    break;
             }
 
             if ((shval_err = SHVAL_SetValue(&gAppState.SharedValues->StatusFlags, curr_flags, 1000)) != SHVAL_ERROR_OK) {
@@ -118,6 +123,6 @@ void status_flags_task(void *arg) {
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    // xQueueSendFromISR(gStatusFlagsQueue, &GPIO_Pin, &xHigherPriorityTaskWoken);
+    xQueueSendFromISR(gStatusFlagsQueue, &GPIO_Pin, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

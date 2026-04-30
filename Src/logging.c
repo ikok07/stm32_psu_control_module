@@ -64,6 +64,7 @@ uint8_t init_logger() {
     HAL_StatusTypeDef hal_err = HAL_OK;
 
     gAppState.huart = (UART_HandleTypeDef){
+        .Instance = USART1,
         .Init = {
             .Mode = UART_MODE_TX,
             .BaudRate = 9600,

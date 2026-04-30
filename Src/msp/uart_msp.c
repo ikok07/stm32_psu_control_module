@@ -5,10 +5,11 @@
 #include "stm32f4xx_hal.h"
 
 #define UART_PORT                               GPIOA
-#define UART_TX_PIN                             9
+#define UART_TX_PIN                             GPIO_PIN_9
 
 void HAL_UART_MspInit(UART_HandleTypeDef *huart) {
     __HAL_RCC_USART1_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
 
     GPIO_InitTypeDef GPIO_Config = {
         .Mode = GPIO_MODE_AF_PP,

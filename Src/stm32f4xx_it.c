@@ -2,10 +2,16 @@
 // Created by Kok on 4/14/26.
 //
 
+#include "app_state.h"
+#include "FreeRTOS.h"
+#include "portmacro.h"
 #include "stm32f4xx_hal.h"
+#include "task.h"
 
-void vApplicationTickHook() {
+void TIM1_BRK_TIM9_IRQHandler() {
+    __HAL_TIM_CLEAR_IT(&gAppState.htim9, TIM_IT_UPDATE);
     HAL_IncTick();
+    HAL_TIM_IRQHandler(&gAppState.htim9);
 }
 
 void EXTI0_IRQHandler() {

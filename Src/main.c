@@ -11,25 +11,20 @@ void vApplicationStackOverflowHook( TaskHandle_t xTask,
 }
 
 int main(void) {
-    if (HAL_Init() != HAL_OK) {
-        while (1);
-    }
-
-    // Start FreeRTOS Scheduler
-    vTaskStartScheduler();
-
-    // Initialize logger
-    LOGGING_Init();
-
-    LOGGER_Log(LOGGER_LEVEL_INFO, "Logger initialized!");
-
     // Initialize application state
     APP_Init();
 
-    LOGGER_Log(LOGGER_LEVEL_INFO, "Application state!");
+    // Initialize the HAL driver
+    HAL_Init();
+
+    // Initialize logger
+    LOGGING_Init();
+    LOGGER_Log(LOGGER_LEVEL_INFO, "Logger initialized!");
 
     // Initialize status flags
     STFLAGS_Init();
-
     LOGGER_Log(LOGGER_LEVEL_INFO, "Status flags initialized!");
+
+    // Start FreeRTOS Scheduler
+    vTaskStartScheduler();
 }

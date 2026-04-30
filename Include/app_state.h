@@ -19,6 +19,7 @@ typedef struct {
 
 typedef struct {
     INA3221_HandleTypeDef hina3221;
+    TIM_HandleTypeDef htim9;                        // User for HAL Ticks!!!
     UART_HandleTypeDef huart;
     APP_TasksTypeDef *Tasks;
     APP_SharedValuesTypeDef *SharedValues;
