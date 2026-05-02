@@ -12,16 +12,19 @@
 typedef struct {
     TaskHandle_t StatusFlagsTask;
     TaskHandle_t DisplayTask;
+    TaskHandle_t PowerMonitorTask;
 } APP_TasksTypeDef;
 
 typedef struct {
     SHVAL_HandleTypeDef StatusFlags;
+    SHVAL_PointerHandleTypeDef MeasurementResults;
 } APP_SharedValuesTypeDef;
 
 typedef struct {
     INA3221_HandleTypeDef hina3221;
     TIM_HandleTypeDef htim9;                        // User for HAL Ticks!!!
     UART_HandleTypeDef huart;
+    I2C_HandleTypeDef hi2c2;
     APP_TasksTypeDef *Tasks;
     APP_SharedValuesTypeDef *SharedValues;
 } APP_StateTypeDef;

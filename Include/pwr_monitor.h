@@ -1,0 +1,12 @@
+//
+// Created by Kok on 5/1/26.
+//
+
+#ifndef STM32_F401_CBU6_PWR_MONITOR_H
+#define STM32_F401_CBU6_PWR_MONITOR_H
+
+#define PWRMONITOR_DISPLAY_EVT_BIT                    BIT0
+
+void PWRMONITOR_Init();
+
+#endif //STM32_F401_CBU6_PWR_MONITOR_H

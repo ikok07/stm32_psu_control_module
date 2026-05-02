@@ -20,8 +20,7 @@ void STFLAGS_Init() {
     gStatusFlagsQueue = xQueueCreate(5, sizeof(uint16_t));
 
     SHVAL_ConfigTypeDef shval_config = {
-        .InitialValue = 0,
-        .SubscribersEventBits = STATUS_FLAGS_DISPLAY_EVT_BIT
+        .InitialValue = 0
     };
     gAppState.SharedValues->StatusFlags = SHVAL_Init(&shval_config);
 
@@ -94,9 +93,13 @@ void status_flags_task(void *arg) {
     SHVAL_ErrorTypeDef shval_err = SHVAL_ERROR_OK;
     uint32_t curr_flags = 0;
     uint16_t gpio_pin;
+    uint32_t last_tick = 0;
 
     while (1) {
         if (xQueueReceive(gStatusFlagsQueue, &gpio_pin, portMAX_DELAY)) {
+            if (HAL_GetTick() - last_tick < 150) continue; // Ignore within 50ms
+            last_tick = HAL_GetTick();
+
             if ((shval_err = SHVAL_GetValue(&gAppState.SharedValues->StatusFlags, &curr_flags, 1000)) != SHVAL_ERROR_OK) {
                 LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to get shared status flags! Error code: %d", shval_err);
                 continue;
@@ -135,7 +138,7 @@ void status_flags_task(void *arg) {
                     else curr_flags &=~ (1 << STATUS_FLAG_12V_EN);
                     break;
                 case PWR_SCREEN_SEL_GPIO_PIN:
-                    uint8_t curr_mode = (curr_flags >> STATUS_FLAG_PWR_DISPLAY_PAGE) && 0x03;
+                    uint8_t curr_mode = (curr_flags >> STATUS_FLAG_PWR_DISPLAY_PAGE) & 0x03;
                     uint8_t next_mode = curr_mode >= PWR_DISPLAY_PAGE_12V ? PWR_DISPLAY_PAGE_3V3 : curr_mode + 1;
 
                     // Clear bits

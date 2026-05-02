@@ -38,10 +38,16 @@
 #define ERR_ACTIVE_FLAG_GPIO_PORT                                   GPIOA
 #define ERR_ACTIVE_FLAG_GPIO_PIN                                    GPIO_PIN_15
 
-#define DISPLAY_I2C_SDA_GPIO_PORT                                   GPIOB
-#define DISPLAY_I2C_SDA_GPIO_PIN                                    GPIO_PIN_6
+#define INA3221_I2C_SDA_GPIO_PORT                                   GPIOB
+#define INA3221_I2C_SDA_GPIO_PIN                                    GPIO_PIN_3
 
 #define DISPLAY_I2C_SCL_GPIO_PORT                                   GPIOB
-#define DISPLAY_I2C_SCL_GPIO_PIN                                    GPIO_PIN_7
+#define DISPLAY_I2C_SCL_GPIO_PIN                                    GPIO_PIN_6
+
+#define DISPLAY_I2C_SDA_GPIO_PORT                                   GPIOB
+#define DISPLAY_I2C_SDA_GPIO_PIN                                    GPIO_PIN_7
+
+#define INA3221_I2C_SCL_GPIO_PORT                                   GPIOB
+#define INA3221_I2C_SCL_GPIO_PIN                                    GPIO_PIN_10
 
 #endif //STM32_F401_CBU6_GPIO_DEFS_H

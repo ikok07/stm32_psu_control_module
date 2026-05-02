@@ -4,6 +4,7 @@
 #include "display.h"
 #include "log.h"
 #include "logging.h"
+#include "pwr_monitor.h"
 #include "status_flags.h"
 
 void vApplicationStackOverflowHook( TaskHandle_t xTask,
@@ -25,6 +26,10 @@ int main(void) {
     // Initialize status flags
     STFLAGS_Init();
     LOGGER_Log(LOGGER_LEVEL_INFO, "Status flags initialized!");
+
+    // Initialize INA3221 power monitor
+    PWRMONITOR_Init();
+    LOGGER_Log(LOGGER_LEVEL_INFO, "INA3221 power monitor initialized!");
 
     // Initialize display
     DISPLAY_Init();

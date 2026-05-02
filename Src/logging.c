@@ -21,13 +21,15 @@
 static void init_basic_logger();
 static void fatal_basic_err_cb();
 
-uint8_t init_logger();
-uint8_t log_cb(LOGGER_EventTypeDef *event);
+static uint8_t init_logger();
+static uint8_t log_cb(LOGGER_EventTypeDef *event);
+static uint8_t fatal_err_cb(LOGGER_EventTypeDef *event);
 
 void LOGGING_Init() {
     LOGGER_CallbacksTypeDef callbacks = {
         .on_init_basic = init_basic_logger,
         .on_fatal_basic = fatal_basic_err_cb,
+        .on_fatal_err = fatal_err_cb,
         .on_init = init_logger,
         .on_log = log_cb,
     };
@@ -82,7 +84,7 @@ uint8_t init_logger() {
 
 uint8_t log_cb(LOGGER_EventTypeDef *event) {
     HAL_StatusTypeDef hal_err = HAL_OK;
-    if ((hal_err = HAL_UART_Transmit(&gAppState.huart, event->msg, strlen(event->msg) + 1, LOGGING_UART_TIMEOUT)) != HAL_OK) {
+    if ((hal_err = HAL_UART_Transmit(&gAppState.huart, (uint8_t*)event->msg, strlen(event->msg) + 1, LOGGING_UART_TIMEOUT)) != HAL_OK) {
         return hal_err;
     };
     HAL_GPIO_WritePin(LOGGING_ERR_LED_PORT, LOGGING_ERR_LED_PIN, GPIO_PIN_SET);
