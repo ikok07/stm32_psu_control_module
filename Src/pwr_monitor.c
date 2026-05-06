@@ -88,7 +88,7 @@ void PWRMONITOR_Init() {
       NULL,
       power_monitor_read_timer_cb
     );
-    xTimerStart(gPowerMonitorReadTimer, pdMS_TO_TICKS(100));
+    // xTimerStart(gPowerMonitorReadTimer, pdMS_TO_TICKS(100));
 
     xTaskCreate(
         power_monitor_task,
@@ -147,31 +147,30 @@ void power_monitor_task(void *arg) {
     INA3221_ErrorTypeDef ina_err = INA3221_ERROR_OK;
     SHVAL_ErrorTypeDef shval_err = SHVAL_ERROR_OK;
     INA3221_ReadResultTypeDef results[3];
-    results[0] = (INA3221_ReadResultTypeDef){.MilliAmps = 100, .MilliVolts = 100};
-    results[1] = (INA3221_ReadResultTypeDef){.MilliAmps = 200, .MilliVolts = 200};
-    results[2] = (INA3221_ReadResultTypeDef){.MilliAmps = 300, .MilliVolts = 300};
 
     while (1) {
         if (xTaskNotifyWait(0x00, 0xFF, NULL, portMAX_DELAY)) {
-            // if ((ina_err = INA3221_ReadChan(&gAppState.hina3221, INA3221_CH1, &results[0])) != INA3221_ERROR_OK) {
-            //     LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to read INA3221 channel 1! Error code: %d", ina_err);
-            //     continue;
-            // };
-            //
-            // if ((ina_err = INA3221_ReadChan(&gAppState.hina3221, INA3221_CH2, &results[1])) != INA3221_ERROR_OK) {
-            //     LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to read INA3221 channel 2! Error code: %d", ina_err);
-            //     continue;
-            // };
-            //
-            // if ((ina_err = INA3221_ReadChan(&gAppState.hina3221, INA3221_CH3, &results[2])) != INA3221_ERROR_OK) {
-            //     LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to read INA3221 channel 3! Error code: %d", ina_err);
-            //     continue;
-            // };
-            vTaskDelay(1000);
+            if ((ina_err = INA3221_ReadChan(&gAppState.hina3221, INA3221_CH1, &results[0])) != INA3221_ERROR_OK) {
+                LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to read INA3221 channel 1! Error code: %d", ina_err);
+                continue;
+            };
+
+            if ((ina_err = INA3221_ReadChan(&gAppState.hina3221, INA3221_CH2, &results[1])) != INA3221_ERROR_OK) {
+                LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to read INA3221 channel 2! Error code: %d", ina_err);
+                continue;
+            };
+
+            if ((ina_err = INA3221_ReadChan(&gAppState.hina3221, INA3221_CH3, &results[2])) != INA3221_ERROR_OK) {
+                LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to read INA3221 channel 3! Error code: %d", ina_err);
+                continue;
+            };
+
             if ((shval_err = SHVAL_PointerSetValue(&gAppState.SharedValues->MeasurementResults, results, 10)) != SHVAL_ERROR_OK) {
                 LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to set shared measurement results! Error code: %d", shval_err);
                 continue;
             }
+
+            xTaskNotifyGive(gAppState.Tasks->DisplayTask);
         }
     }
 }

@@ -5,7 +5,7 @@
 #ifndef STM32_F401_CBU6_PWR_MONITOR_H
 #define STM32_F401_CBU6_PWR_MONITOR_H
 
-#define PWRMONITOR_DISPLAY_EVT_BIT                    BIT0
+#define PWRMONITOR_DISPLAY_EVT_BIT                    BIT1
 
 void PWRMONITOR_Init();
 

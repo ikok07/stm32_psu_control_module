@@ -1,6 +1,7 @@
 #include "stm32f4xx_hal.h"
 
 #include "app_state.h"
+#include "bit_defs.h"
 #include "display.h"
 #include "log.h"
 #include "logging.h"

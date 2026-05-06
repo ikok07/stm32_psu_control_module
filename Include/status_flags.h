@@ -6,6 +6,8 @@
 #ifndef STM32_F401_CBU6_STATUS_FLAGS_H
 #define STM32_F401_CBU6_STATUS_FLAGS_H
 
+#define STATUS_FLAGS_DISPLAY_EVT_BIT                    BIT0
+
 #define STATUS_FLAG_PWR_VALID                           0
 #define STATUS_FLAG_PWR_CRITICAL                        1
 #define STATUS_FLAG_PWR_WARNING                         2

@@ -1,0 +1,11 @@
+//
+// Created by Kok on 5/6/26.
+//
+
+#ifndef STM32_F401_CBU6_SHARED_VALUE_DEFS_H
+#define STM32_F401_CBU6_SHARED_VALUE_DEFS_H
+
+#define DEVICE_STATE_GROUP_ST_FLAGS_INDEX                       0
+#define DEVICE_STATE_GROUP_MEASUREMENT_INDEX                    1
+
+#endif //STM32_F401_CBU6_SHARED_VALUE_DEFS_H
