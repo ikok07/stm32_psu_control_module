@@ -75,8 +75,7 @@ void PWRMONITOR_Init() {
 
     SHVAL_PointerConfigTypeDef SHVAL_Config = {
         .InitialValue = gResults,
-        .ValueLen = sizeof(gResults),
-        .SubscribersEventBits = PWRMONITOR_DISPLAY_EVT_BIT,
+        .ValueLen = sizeof(gResults)
     };
 
     gAppState.SharedValues->MeasurementResults = SHVAL_PointerInit(&SHVAL_Config);

@@ -35,6 +35,9 @@
 #define UART_TX_GPIO_PORT                                           GPIOA
 #define UART_TX_GPIO_PIN                                            GPIO_PIN_9
 
+#define ALARM_BUZZER_GPIO_PORT                                      GPIOA
+#define ALARM_BUZZER_GPIO_PIN                                       GPIO_PIN_12
+
 #define ERR_ACTIVE_FLAG_GPIO_PORT                                   GPIOA
 #define ERR_ACTIVE_FLAG_GPIO_PIN                                    GPIO_PIN_15
 

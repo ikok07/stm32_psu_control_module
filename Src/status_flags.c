@@ -4,6 +4,8 @@
 
 #include "status_flags.h"
 
+#include <string.h>
+
 #include "app_state.h"
 #include "bit_defs.h"
 #include "gpio_defs.h"
@@ -15,27 +17,17 @@
 
 void status_flags_task(void *arg);
 
-static uint32_t handle_status_change(GPIO_TypeDef *GPIOx, uint16_t GpioPin, uint32_t CurrFlags);
+static uint32_t handle_status_change(uint16_t GpioPin, uint8_t State, uint32_t CurrFlags);
 
 QueueHandle_t gStatusFlagsQueue;
 
 void STFLAGS_Init() {
-    gStatusFlagsQueue = xQueueCreate(5, sizeof(uint16_t));
+    gStatusFlagsQueue = xQueueCreate(16, sizeof(STFLAGS_EventTypeDef));
 
     SHVAL_ConfigTypeDef shval_config = {
-        .InitialValue = 0,
-        .SubscribersEventBits = STATUS_FLAGS_DISPLAY_EVT_BIT
+        .InitialValue = 0
     };
     gAppState.SharedValues->StatusFlags = SHVAL_Init(&shval_config);
-
-    xTaskCreate(
-        status_flags_task,
-        "Status Flags Task",
-        STATUS_FLAGS_TASK_STACK_DEPTH,
-        NULL,
-        STATUS_FLAGS_TASK_PRIORITY,
-        &gAppState.Tasks->StatusFlagsTask
-    );
 
     GPIO_InitTypeDef GPIO_Config = {
         .Speed = GPIO_SPEED_FREQ_LOW,
@@ -95,27 +87,42 @@ void STFLAGS_Init() {
     HAL_GPIO_Init(ERR_ACTIVE_FLAG_GPIO_PORT, &GPIO_Config);
 
     // Handle initial gpio states
-    uint32_t curr_flags = handle_status_change(GPIOA, PWR_VALID_FLAG_GPIO_PIN, 0);
-    curr_flags = handle_status_change(GPIOA, PWR_CRITICAL_FLAG_GPIO_PIN, curr_flags);
-    curr_flags = handle_status_change(GPIOA, PWR_WARNING_FLAG_GPIO_PIN, curr_flags);
-    curr_flags = handle_status_change(GPIOA, PWR_TIMING_FLAG_GPIO_PIN, curr_flags);
-    curr_flags = handle_status_change(GPIOA, PWR_3V3_EN_FLAG_GPIO_PIN, curr_flags);
-    curr_flags = handle_status_change(GPIOA, PWR_5V_EN_FLAG_GPIO_PIN, curr_flags);
-    handle_status_change(GPIOA, PWR_12V_EN_FLAG_GPIO_PIN, curr_flags);
+    uint32_t curr_flags = handle_status_change(PWR_VALID_FLAG_GPIO_PIN, HAL_GPIO_ReadPin(GPIOA, PWR_VALID_FLAG_GPIO_PIN), 0);
+    curr_flags = handle_status_change(PWR_CRITICAL_FLAG_GPIO_PIN, HAL_GPIO_ReadPin(GPIOA, PWR_CRITICAL_FLAG_GPIO_PIN), curr_flags);
+    curr_flags = handle_status_change(PWR_WARNING_FLAG_GPIO_PIN, HAL_GPIO_ReadPin(GPIOA, PWR_WARNING_FLAG_GPIO_PIN), curr_flags);
+    curr_flags = handle_status_change(PWR_TIMING_FLAG_GPIO_PIN, HAL_GPIO_ReadPin(GPIOA, PWR_TIMING_FLAG_GPIO_PIN), curr_flags);
+    curr_flags = handle_status_change(PWR_3V3_EN_FLAG_GPIO_PIN, HAL_GPIO_ReadPin(GPIOA, PWR_3V3_EN_FLAG_GPIO_PIN), curr_flags);
+    curr_flags = handle_status_change(PWR_5V_EN_FLAG_GPIO_PIN, HAL_GPIO_ReadPin(GPIOA, PWR_5V_EN_FLAG_GPIO_PIN), curr_flags);
+    handle_status_change(PWR_12V_EN_FLAG_GPIO_PIN, HAL_GPIO_ReadPin(GPIOA, PWR_12V_EN_FLAG_GPIO_PIN), curr_flags);
+
+    xTaskCreate(
+    status_flags_task,
+    "Status Flags Task",
+    STATUS_FLAGS_TASK_STACK_DEPTH,
+    NULL,
+    STATUS_FLAGS_TASK_PRIORITY,
+    &gAppState.Tasks->StatusFlagsTask
+);
 }
 
 void status_flags_task(void *arg) {
-    LOGGER_Log(LOGGER_LEVEL_INFO, "Status flags tasks started!");
-
     SHVAL_ErrorTypeDef shval_err = SHVAL_ERROR_OK;
     uint32_t curr_flags = 0;
-    uint16_t gpio_pin;
-    uint32_t last_tick = 0;
+    STFLAGS_EventTypeDef event;
+    // Track for each GPIO
+    TickType_t last_ticks[16] = {0};
+    uint8_t last_states[16] = {0};
+    memset(last_states, 2, sizeof(last_states));
 
     while (1) {
-        if (xQueueReceive(gStatusFlagsQueue, &gpio_pin, portMAX_DELAY)) {
-            if (HAL_GetTick() - last_tick < 150) continue; // Ignore within 50ms
-            last_tick = HAL_GetTick();
+        if (xQueueReceive(gStatusFlagsQueue, &event, portMAX_DELAY)) {
+            uint8_t pin_idx = __builtin_ctz(event.Pin);
+            TickType_t now = xTaskGetTickCount();
+
+            // 25ms debounce
+            if (now - last_ticks[pin_idx] < pdMS_TO_TICKS(25) || event.State == last_states[pin_idx]) continue;
+            last_ticks[pin_idx] = now;
+            last_states[pin_idx] = event.State;
 
             if ((shval_err = SHVAL_GetValue(&gAppState.SharedValues->StatusFlags, &curr_flags, 1000)) != SHVAL_ERROR_OK) {
                 LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to get shared status flags! Error code: %d", shval_err);
@@ -123,45 +130,43 @@ void status_flags_task(void *arg) {
             }
 
             // GPIOA is common for all GPIOs
-            handle_status_change(GPIOA, gpio_pin, curr_flags);
+            curr_flags = handle_status_change(event.Pin, event.State, curr_flags);
 
             xTaskNotifyGive(gAppState.Tasks->DisplayTask);
         }
     }
 }
 
-uint32_t handle_status_change(GPIO_TypeDef *GPIOx, uint16_t GpioPin, uint32_t CurrFlags) {
+uint32_t handle_status_change(uint16_t GpioPin, uint8_t State, uint32_t CurrFlags) {
     SHVAL_ErrorTypeDef shval_err = SHVAL_ERROR_OK;
-
-    uint8_t curr_gpio_state = HAL_GPIO_ReadPin(GPIOx, GpioPin);
 
     switch (GpioPin) {
         case PWR_VALID_FLAG_GPIO_PIN:
-            if (curr_gpio_state) CurrFlags |= (1 << STATUS_FLAG_PWR_VALID);
+            if (State) CurrFlags |= (1 << STATUS_FLAG_PWR_VALID);
             else CurrFlags &=~ (1 << STATUS_FLAG_PWR_VALID);
             break;
         case PWR_CRITICAL_FLAG_GPIO_PIN:
-            if (!curr_gpio_state) CurrFlags |= (1 << STATUS_FLAG_PWR_CRITICAL);
+            if (!State) CurrFlags |= (1 << STATUS_FLAG_PWR_CRITICAL);
             else CurrFlags &=~ (1 << STATUS_FLAG_PWR_CRITICAL);
             break;
         case PWR_WARNING_FLAG_GPIO_PIN:
-            if (!curr_gpio_state) CurrFlags |= (1 << STATUS_FLAG_PWR_WARNING);
+            if (!State) CurrFlags |= (1 << STATUS_FLAG_PWR_WARNING);
             else CurrFlags &=~ (1 << STATUS_FLAG_PWR_WARNING);
             break;
         case PWR_TIMING_FLAG_GPIO_PIN:
-            if (!curr_gpio_state) CurrFlags |= (1 << STATUS_FLAG_PWR_TIMING);
+            if (!State) CurrFlags |= (1 << STATUS_FLAG_PWR_TIMING);
             else CurrFlags &=~ (1 << STATUS_FLAG_PWR_TIMING);
             break;
         case PWR_3V3_EN_FLAG_GPIO_PIN:
-            if (curr_gpio_state) CurrFlags |= (1 << STATUS_FLAG_3V3_EN);
+            if (State) CurrFlags |= (1 << STATUS_FLAG_3V3_EN);
             else CurrFlags &=~ (1 << STATUS_FLAG_3V3_EN);
             break;
         case PWR_5V_EN_FLAG_GPIO_PIN:
-            if (curr_gpio_state) CurrFlags |= (1 << STATUS_FLAG_5V_EN);
+            if (State) CurrFlags |= (1 << STATUS_FLAG_5V_EN);
             else CurrFlags &=~ (1 << STATUS_FLAG_5V_EN);
             break;
         case PWR_12V_EN_FLAG_GPIO_PIN:
-            if (curr_gpio_state) CurrFlags |= (1 << STATUS_FLAG_12V_EN);
+            if (State) CurrFlags |= (1 << STATUS_FLAG_12V_EN);
             else CurrFlags &=~ (1 << STATUS_FLAG_12V_EN);
             break;
         case PWR_SCREEN_SEL_GPIO_PIN:
@@ -185,6 +190,11 @@ uint32_t handle_status_change(GPIO_TypeDef *GPIOx, uint16_t GpioPin, uint32_t Cu
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xQueueSendFromISR(gStatusFlagsQueue, &GPIO_Pin, &xHigherPriorityTaskWoken);
+    STFLAGS_EventTypeDef event = {
+        .Pin = GPIO_Pin,
+        .State = HAL_GPIO_ReadPin(GPIOA, GPIO_Pin)
+    };
+
+    xQueueSendFromISR(gStatusFlagsQueue, &event, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

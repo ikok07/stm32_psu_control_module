@@ -12,6 +12,7 @@
 typedef struct {
     TaskHandle_t StatusFlagsTask;
     TaskHandle_t DisplayTask;
+    TaskHandle_t AlarmBuzzerTask;
     TaskHandle_t PowerMonitorTask;
 } APP_TasksTypeDef;
 

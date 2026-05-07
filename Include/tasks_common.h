@@ -11,6 +11,9 @@
 #define STATUS_FLAGS_TASK_PRIORITY                              4
 #define STATUS_FLAGS_TASK_STACK_DEPTH                           1024
 
+#define ALARM_BUZZER_TASK_PRIORITY                              4
+#define ALARM_BUZZER_TASK_STACK_DEPTH                           1024
+
 #define DISPLAY_TASK_PRIORITY                                   3
 #define DISPLAY_TASK_STACK_DEPTH                                1024
 

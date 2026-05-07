@@ -6,7 +6,7 @@
 #ifndef STM32_F401_CBU6_STATUS_FLAGS_H
 #define STM32_F401_CBU6_STATUS_FLAGS_H
 
-#define STATUS_FLAGS_DISPLAY_EVT_BIT                    BIT0
+#include <stdint.h>
 
 #define STATUS_FLAG_PWR_VALID                           0
 #define STATUS_FLAG_PWR_CRITICAL                        1
@@ -21,6 +21,13 @@
 #define PWR_DISPLAY_PAGE_3V3                            0
 #define PWR_DISPLAY_PAGE_5V                             1
 #define PWR_DISPLAY_PAGE_12V                            2
+
+#define STATUS_FLAG_ALARM_DURATION_MS                   2000
+
+typedef struct {
+    uint16_t Pin;
+    uint8_t State;
+} STFLAGS_EventTypeDef;
 
 void STFLAGS_Init();
 
