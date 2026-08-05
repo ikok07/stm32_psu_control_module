@@ -84,6 +84,7 @@ void DISPLAY_Init() {
 
 void display_task(void *arg) {
     SHVAL_ErrorTypeDef shval_err = SHVAL_ERROR_OK;
+    INA3221_ErrorTypeDef ina_err = INA3221_ERROR_OK;
     INA3221_ReadResultTypeDef results[3];
     uint32_t status_flags;
 
@@ -130,20 +131,44 @@ void display_task(void *arg) {
             float current_milliamps = (float)results[curr_page].MilliAmps;
             float power_milliwatts = ((float)results[curr_page].MilliVolts * current_milliamps) / 1000.0f;
 
+            uint8_t chan3v3_en = (status_flags & (1 << STATUS_FLAG_3V3_EN));
+            uint8_t chan5v_en = (status_flags & (1 << STATUS_FLAG_5V_EN));
+            uint8_t chan12v_en = (status_flags & (1 << STATUS_FLAG_12V_EN));
+
+            uint8_t enabled_channels = 0;
+            uint8_t disabled_channels = 0;
+
+            if (chan3v3_en) enabled_channels |= INA3221_CH1;
+            else disabled_channels |= INA3221_CH1;
+
+            if (chan5v_en) enabled_channels |= INA3221_CH2;
+            else disabled_channels |= INA3221_CH2;
+
+            if (chan12v_en) enabled_channels |= INA3221_CH3;
+            else disabled_channels |= INA3221_CH3;
+
+            if ((ina_err = INA3221_ChannelControl(&gAppState.hina3221, enabled_channels, 1)) != INA3221_ERROR_OK) {
+                LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to enable INA3221 channels! Error code: %d", ina_err);
+            }
+
+            if ((ina_err = INA3221_ChannelControl(&gAppState.hina3221, disabled_channels, 0)) != INA3221_ERROR_OK) {
+                LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to disable INA3221 channels! Error code: %d", ina_err);
+            }
+
             if (curr_page == PWR_DISPLAY_PAGE_3V3) {
-                if (((status_flags >> STATUS_FLAG_3V3_EN) & 0x01) == 0) {
+                if (!chan3v3_en) {
                     display_draw_chan_disabled("3V3 Rail");
                 } else {
                     display_draw_data("3V3 Rail", power_milliwatts, current_milliamps);
                 }
             } else if (curr_page == PWR_DISPLAY_PAGE_5V) {
-                if (((status_flags >> STATUS_FLAG_5V_EN) & 0x01) == 0) {
+                if (!chan5v_en) {
                     display_draw_chan_disabled("5V Rail");
                 } else {
                     display_draw_data("5V Rail", power_milliwatts, current_milliamps);
                 }
             } else if (curr_page == PWR_DISPLAY_PAGE_12V) {
-                if (((status_flags >> STATUS_FLAG_12V_EN) & 0x01) == 0) {
+                if (!chan12v_en) {
                     display_draw_chan_disabled("12V Rail");
                 } else {
                     display_draw_data("12V Rail", power_milliwatts, current_milliamps);

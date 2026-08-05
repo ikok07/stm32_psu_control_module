@@ -14,7 +14,7 @@
 
 #define LOGGING_ERR_LED_GPIOEN                  __HAL_RCC_GPIOA_CLK_ENABLE()
 #define LOGGING_ERR_LED_PORT                    GPIOA
-#define LOGGING_ERR_LED_PIN                     15
+#define LOGGING_ERR_LED_PIN                     GPIO_PIN_15
 
 #define LOGGING_UART_TIMEOUT                    1000
 
@@ -97,7 +97,6 @@ uint8_t fatal_err_cb(LOGGER_EventTypeDef *event) {
         return hal_err;
     };
     HAL_GPIO_WritePin(LOGGING_ERR_LED_PORT, LOGGING_ERR_LED_PIN, GPIO_PIN_SET);
-    vTaskEndScheduler();
-    __disable_irq();
+    taskDISABLE_INTERRUPTS();
     while (1);
 }

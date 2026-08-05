@@ -171,7 +171,7 @@ uint32_t handle_status_change(uint16_t GpioPin, uint8_t State, uint32_t CurrFlag
             break;
         case PWR_SCREEN_SEL_GPIO_PIN:
             uint8_t curr_mode = (CurrFlags >> STATUS_FLAG_PWR_DISPLAY_PAGE) & 0x03;
-            uint8_t next_mode = curr_mode >= PWR_DISPLAY_PAGE_12V ? PWR_DISPLAY_PAGE_3V3 : curr_mode + 1;
+            uint8_t next_mode = curr_mode >= PWR_DISPLAY_PAGE_3V3 ? PWR_DISPLAY_PAGE_12V : curr_mode + 1;
 
             // Clear bits
             CurrFlags &=~ (0x03 << STATUS_FLAG_PWR_DISPLAY_PAGE);

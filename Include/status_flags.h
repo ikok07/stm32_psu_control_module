@@ -18,9 +18,9 @@
 #define STATUS_FLAG_PWR_DISPLAY_PAGE                    7           // 2 bits for 3 pages
 #define STATUS_FLAG_ERR_ACTIVE                          9
 
-#define PWR_DISPLAY_PAGE_3V3                            0
+#define PWR_DISPLAY_PAGE_12V                            0
 #define PWR_DISPLAY_PAGE_5V                             1
-#define PWR_DISPLAY_PAGE_12V                            2
+#define PWR_DISPLAY_PAGE_3V3                            2
 
 #define STATUS_FLAG_ALARM_DURATION_MS                   2000
 

@@ -3,10 +3,7 @@
 //
 
 #include "app_state.h"
-#include "FreeRTOS.h"
-#include "portmacro.h"
 #include "stm32f4xx_hal.h"
-#include "task.h"
 
 void TIM1_BRK_TIM9_IRQHandler() {
     HAL_IncTick();

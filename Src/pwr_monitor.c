@@ -68,10 +68,10 @@ void PWRMONITOR_Init() {
         .WarningAlertValueCh2MicroVolts = 112000, // Warn at 14A
         .WarningAlertValueCh3MicroVolts = 115000, // Warn at 23A
     };
-    // if ((ina3221_err = INA3221_Init(&gAppState.hina3221)) != INA3221_ERROR_OK) {
-    //     LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to initialize INA3221! Error code: %d", ina3221_err);
-    //     return;
-    // }
+    if ((ina3221_err = INA3221_Init(&gAppState.hina3221)) != INA3221_ERROR_OK) {
+        LOGGER_LogF(LOGGER_LEVEL_ERROR, "Failed to initialize INA3221! Error code: %d", ina3221_err);
+        return;
+    }
 
     SHVAL_PointerConfigTypeDef SHVAL_Config = {
         .InitialValue = gResults,

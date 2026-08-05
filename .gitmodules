@@ -13,3 +13,6 @@
 [submodule "lib/ssd1306"]
 	path = lib/ssd1306
 	url = https://github.com/afiskon/stm32-ssd1306.git
+[submodule "psu_control_module_pcb"]
+	path = psu_control_module_pcb
+	url = https://github.com/ikok07/psu_control_module_pcb.git
