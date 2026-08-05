@@ -27,8 +27,6 @@ Both halves are mine: the schematic and board layout in KiCad, and the firmware 
   - [Event flow](#event-flow)
   - [Driver stack](#driver-stack)
 - [Repository layout](#repository-layout)
-- [Building and flashing](#building-and-flashing)
-- [Project status](#project-status)
 - [Author](#author)
 
 ---
