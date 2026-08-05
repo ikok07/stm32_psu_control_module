@@ -26,7 +26,6 @@ Both halves are mine: the schematic and board layout in KiCad, and the firmware 
   - [Task model](#task-model)
   - [Event flow](#event-flow)
   - [Driver stack](#driver-stack)
-- [Engineering notes](#engineering-notes)
 - [Repository layout](#repository-layout)
 - [Building and flashing](#building-and-flashing)
 - [Project status](#project-status)
@@ -249,24 +248,6 @@ Third-party: [afiskon/stm32-ssd1306](https://github.com/afiskon/stm32-ssd1306) f
 
 ---
 
-## Engineering notes
-
-A few decisions that are not obvious from the code:
-
-**The HAL tick runs on TIM9, not SysTick.** FreeRTOS owns SysTick on Cortex-M, but the STM32 HAL also wants it for `HAL_Delay` and its timeout logic. `HAL_InitTick()` is overridden in `Src/msp/tim_msp.c` to configure TIM9 as a 1 MHz / 1 ms base with its own IRQ, which keeps HAL timeouts working while the scheduler is running and avoids the classic "HAL blocks forever inside a task" failure.
-
-**The polling period is derived from the sensor, not guessed.** At 64-sample averaging with 140 µs bus and shunt conversion times across 3 channels, one full INA3221 conversion round takes 53.76 ms. The software timer is set to 59 ms — the conversion time plus ~5 ms of margin — so the MCU reads each sample exactly once instead of re-reading stale registers or missing conversions.
-
-**Debouncing is a task-side concern.** The EXTI handler pushes `{pin, level}` into a queue and returns. The status-flags task keeps per-pin timestamps and last-known levels, and discards anything within 25 ms of the previous accepted edge or that does not represent an actual change. Contact bounce on eight mechanical inputs therefore costs queue slots, not interrupt latency.
-
-**Alert polarity is handled per-signal.** The INA3221's alert pins are open-drain and active low, while `PV` is released high when power is valid. `handle_status_change()` encodes this asymmetry explicitly rather than assuming a uniform convention across the four lines.
-
-**Logging degrades instead of failing.** `LOGGING_Init()` registers both a full UART transport and a "basic" fallback. If UART initialisation fails, the logger falls back to driving the error LED, so a board with a broken serial path still signals fatal faults.
-
-**Channels follow the UI.** The display task enables only the INA3221 channels whose rails are actually switched on, so measuring a disconnected rail neither wastes conversion time nor produces a misleading reading.
-
----
-
 ## Repository layout
 
 ```
@@ -301,56 +282,6 @@ Board configuration is centralised: every pin lives in `Include/gpio_defs.h`, ev
 
 ---
 
-## Building and flashing
-
-**Requirements** — CMake ≥ 3.22, Ninja, `arm-none-eabi-gcc`, OpenOCD, an ST-Link, and KiCad 9 if you want to open the hardware.
-
-```bash
-git clone --recurse-submodules https://github.com/ikok07/stm32_psu_control_module.git
-cd stm32_psu_control_module
-
-cmake --preset Debug          # or: --preset Release
-cmake --build --preset Debug
-```
-
-The build prints a memory-usage summary; the ELF lands in `build/Debug/`.
-
-Flash over SWD (J6):
-
-```bash
-openocd -f openocd.cfg -c "program build/Debug/stm32_f401_cbu6.elf verify reset exit"
-```
-
-Watch the logs on the UART terminal (J14) at **9600 8N1**.
-
-Regenerating the hardware documentation in `docs/` from the KiCad sources:
-
-```bash
-kicad-cli sch export pdf    -o docs/schematic.pdf  psu_control_module_pcb/psu_control_module.kicad_sch
-kicad-cli sch export bom    -o docs/bom.csv --group-by Value psu_control_module_pcb/psu_control_module.kicad_sch
-kicad-cli pcb render        -o docs/images/pcb_3d_top.png --quality high --perspective \
-                               --rotate=335,0,20 --zoom 0.8 --floor --background opaque \
-                               psu_control_module_pcb/psu_control_module.kicad_pcb
-```
-
----
-
-## Project status
-
-Hardware revision **v0.0.1** is complete and manufacturable; firmware is at end-to-end bring-up. The RTOS scaffolding, status-flag pipeline, display stack, alarm path and logging are implemented and exercised; INA3221 acquisition is wired end to end but its `INA3221_Init()` call and polling timer are currently commented out in `Src/pwr_monitor.c` pending hardware bring-up of the sensor, so the display currently runs from the status-flag path alone.
-
-Known work remaining:
-
-- Bring up the INA3221 on real hardware and re-enable acquisition.
-- Add the TVS diode noted on the schematic for rail over-voltage protection.
-- Re-check the display page ↔ INA3221 channel ordering: hardware wires CH1 to the 12 V shunt and CH3 to the 3.3 V shunt, while the display pages are ordered 3V3 → 5 V → 12 V and index the result array directly.
-- Size `configTOTAL_HEAP_SIZE` against the four 1024-word task stacks.
-- Explicit system-clock configuration; the MCU currently runs from the default 16 MHz HSI.
-
----
-
 ## Author
 
 **Kaloyan Stefanov** — hardware and firmware.
-
-Schematic capture and PCB layout in KiCad; bare-metal STM32 firmware on FreeRTOS; three reusable embedded libraries published alongside.

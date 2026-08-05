@@ -87,7 +87,7 @@ void PWRMONITOR_Init() {
       NULL,
       power_monitor_read_timer_cb
     );
-    // xTimerStart(gPowerMonitorReadTimer, pdMS_TO_TICKS(100));
+    xTimerStart(gPowerMonitorReadTimer, pdMS_TO_TICKS(100));
 
     xTaskCreate(
         power_monitor_task,

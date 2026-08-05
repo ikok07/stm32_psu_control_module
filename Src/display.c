@@ -138,13 +138,13 @@ void display_task(void *arg) {
             uint8_t enabled_channels = 0;
             uint8_t disabled_channels = 0;
 
-            if (chan3v3_en) enabled_channels |= INA3221_CH1;
+            if (chan12v_en) enabled_channels |= INA3221_CH1;
             else disabled_channels |= INA3221_CH1;
 
             if (chan5v_en) enabled_channels |= INA3221_CH2;
             else disabled_channels |= INA3221_CH2;
 
-            if (chan12v_en) enabled_channels |= INA3221_CH3;
+            if (chan3v3_en) enabled_channels |= INA3221_CH3;
             else disabled_channels |= INA3221_CH3;
 
             if ((ina_err = INA3221_ChannelControl(&gAppState.hina3221, enabled_channels, 1)) != INA3221_ERROR_OK) {
